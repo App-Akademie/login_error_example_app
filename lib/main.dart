@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -38,13 +39,19 @@ Future<String> registerUser(String userName, String passWord) async {
   final userDataMap = {"username": userName, "password": passWord};
   String jsonEncoded = jsonEncode(userDataMap);
   // Aufruf machen.
-  final http.Response response = await http.post(
-    Uri.parse("http://localhost:8080/register"),
-    body: jsonEncoded,
-  );
-  // Ergebnis des Aufrufes (Erfolg/Fehler) zurückgeben.
+  try {
+    final http.Response response = await http.post(
+      Uri.parse("http://localhost:8080/register"),
+      body: jsonEncoded,
+    );
 
-  return response.statusCode.toString();
+    return response.statusCode.toString();
+  } on http.ClientException catch (e) {
+    log("$e");
+    return "Keine Verbindung zum Server";
+  } catch (e) {
+    return "Exception, call customer support.";
+  }
 }
 
 class RegisterWidget extends StatefulWidget {
@@ -71,6 +78,12 @@ class _RegisterWidgetState extends State<RegisterWidget> {
       message = "Daten für die Anmeldung haben gefehlt";
     } else if (result == "409") {
       message = "Benutzer gibt es bereits";
+    } else if (result == "Exception") {
+      message = "Es gab eine Ausnahme";
+    } else if (result == "Keine Verbindung zum Server") {
+      message = result;
+    } else if (result == "Exception, call customer support.") {
+      message = result;
     } else {
       message = "Unbekannter Fehler";
     }
